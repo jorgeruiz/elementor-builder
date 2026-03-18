@@ -83,7 +83,7 @@ export default function PreviewStep({ state, setProcessing, addLog, setSections,
           {state.sections.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">Esperando evaluación...</p>
           ) : (
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion className="w-full">
               {state.sections.map((sec, i) => (
                 <AccordionItem value={`item-${i}`} key={sec.id}>
                   <AccordionTrigger className="hover:no-underline px-2 py-3 bg-slate-50 dark:bg-slate-900/50 rounded-md mb-2 data-[state=open]:rounded-b-none">
