@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elementor JSON Builder
 
-## Getting Started
+Aplicación web robusta diseñada para convertir estructuras y archivos HTML en archivos JSON compatibles y listos para importar como Plantillas de Elementor en WordPress.
 
-First, run the development server:
+## Documentos de Arquitectura
+Durante el desarrollo, se generaron los siguientes documentos de arquitectura en el sistema de planeación:
+- `implementation_plan.md`: Diseño detallado de módulos y flujos de API.
+- `transformation_rules.md`: Reglas del mapeo de AST a Elementor Widgets.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ¿Qué resuelve esta aplicación?
+El problema de generar JSON de Elementor desde páginas muy grandes, que usualmente fallan debido a caídas de memoria (OOM) o "server timeouts" en PHP al importarlas.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Arquitectura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend:** Next.js App Router, React, Tailwind CSS, shadcn/ui.
+- **Flujo UX:** Un Wizard de 4 pasos (Subida -> Configuración -> Procesamiento/Vista Previa -> Exportación).
+- **Backend (API Routes):**
+  - `/api/analyze`: Utiliza `cheerio` para parsear HTML a un AST personalizado y luego lo segmenta en bloques lógicos.
+  - `/api/export`: Aplica reglas de mapeo Elementor estrictas, verifica el peso de los componentes (módulo *Anti-truncamiento*) y genera un archivo ZIP conteniendo un JSON único (si es pequeño) o múltiples JSON segmentados (obligatorio para páginas grandes). Finalmente, incluye un LOG/README de importación.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Instrucciones Locales
+Para ejecutar esta aplicación en modo desarrollo:
 
-## Learn More
+1. Instala las dependencias:
+   \`\`\`bash
+   npm install
+   \`\`\`
+2. Inicia el servidor de Next.js:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
+3. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts Adicionales
+Para correr las pruebas unitarias que validan los "5 Casos de Uso Clave" definidos:
+\`\`\`bash
+npx tsx test-pipeline.ts
+\`\`\`
+Esto validará la lógica core contra HTMLs complejos sin necesidad de levantar el navegador.
