@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { parseHtmlToAst } from '@/lib/html-parser';
-import { detectSections } from '@/lib/section-detector';
-import { generateElementorJson } from '@/lib/json-generator';
+import { processTemplateInjection } from '@/lib/template-injector';
 import { validateElementorJson } from '@/lib/validators';
 import JSZip from 'jszip';
 
@@ -35,10 +33,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No HTML content' }, { status: 400 });
     }
 
-    // Pipeline Completo
-    const ast = parseHtmlToAst(htmlContent);
-    const sections = detectSections(ast);
-    const generatedFiles = generateElementorJson(sections, config);
+    // Pipeline Inyección LLM
+    const injectedJson = await processTemplateInjection(htmlContent);
+    const generatedFiles = [
+      {
+        filename: `${config.projectName.replace(/\s+/g, '_')}_universal.json`,
+        content: JSON.stringify(injectedJson, null, 2)
+      }
+    ];
 
     const allWarnings: string[] = [];
     
