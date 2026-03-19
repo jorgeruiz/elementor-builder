@@ -62,15 +62,6 @@ export default function WizardFlow() {
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 space-y-8">
-      {/* Stepper Header */}
-      <div className="flex items-center justify-between mb-8">
-        {steps.map((s, i) => (
-          <div key={i} className="flex flex-col items-center flex-1 relative">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 
-              ${state.step > i + 1 ? 'bg-green-600 text-white' : 
-                state.step === i + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {i + 1}
             </div>
             <div className="mt-2 text-center hidden sm:block">
               <p className="text-sm font-medium">{s.title}</p>
