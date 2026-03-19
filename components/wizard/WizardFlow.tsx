@@ -62,58 +62,69 @@ export default function WizardFlow() {
   ];
 
   return (
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-slate-700/50 shadow-2xl shadow-black/40 rounded-3xl overflow-hidden p-1 md:p-8 animate-in fade-in zoom-in-95 duration-500">
+      <div className="w-full">
+        {/* Stepper Header */}
+        <div className="flex items-center justify-between mb-8 px-4 pt-4">
+          {steps.map((s, i) => (
+            <div key={i} className="flex flex-col items-center flex-1 relative">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-all duration-300
+                ${state.step > i + 1 ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 
+                  state.step === i + 1 ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)] ring-2 ring-blue-400/50' : 'bg-slate-800 text-slate-400'}`}>
+                {i + 1}
+              </div>
+              <div className="mt-3 text-center hidden sm:block">
+                <p className={`text-sm font-medium ${state.step >= i + 1 ? 'text-slate-200' : 'text-slate-500'}`}>{s.title}</p>
+                <p className="text-xs text-slate-400 mt-1">{s.description}</p>
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`hidden sm:block absolute top-5 left-1/2 w-full h-[2px] -z-0 transition-colors duration-500
+                  ${state.step > i + 1 ? 'bg-indigo-500/50' : 'bg-slate-800'}`} />
+              )}
             </div>
-            <div className="mt-2 text-center hidden sm:block">
-              <p className="text-sm font-medium">{s.title}</p>
-              <p className="text-xs text-muted-foreground">{s.description}</p>
-            </div>
-            {i < steps.length - 1 && (
-              <div className={`hidden sm:block absolute top-5 left-1/2 w-full h-[2px] -z-0
-                ${state.step > i + 1 ? 'bg-green-600' : 'bg-border'}`} />
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <Card className="border-2 shadow-sm">
-        <CardHeader>
-          <CardTitle>{steps[state.step - 1].title}</CardTitle>
-          <CardDescription>{steps[state.step - 1].description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {state.step === 1 && (
-            <UploadStep 
-              files={state.files} 
-              updateFiles={updateFiles} 
-              onNext={nextStep} 
-            />
-          )}
-          {state.step === 2 && (
-            <ConfigStep 
-              config={state.config} 
-              updateConfig={updateConfig} 
-              onNext={nextStep} 
-              onPrev={prevStep} 
-            />
-          )}
-          {state.step === 3 && (
-            <PreviewStep 
-              state={state} 
-              setProcessing={setProcessing}
-              addLog={addLog}
-              setSections={setSections}
-              onNext={nextStep} 
-              onPrev={prevStep} 
-            />
-          )}
-          {state.step === 4 && (
-            <ExportStep 
-              state={state} 
-              onPrev={prevStep} 
-            />
-          )}
-        </CardContent>
-      </Card>
+        <Card className="border border-slate-700/50 bg-slate-900/40 shadow-none backdrop-blur-md">
+          <CardHeader className="border-b border-slate-800/50 bg-slate-900/20 pb-6 mb-6">
+            <CardTitle className="text-2xl text-slate-100">{steps[state.step - 1].title}</CardTitle>
+            <CardDescription className="text-slate-400 text-sm mt-1">{steps[state.step - 1].description}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            {state.step === 1 && (
+              <UploadStep 
+                files={state.files} 
+                updateFiles={updateFiles} 
+                onNext={nextStep} 
+              />
+            )}
+            {state.step === 2 && (
+              <ConfigStep 
+                config={state.config} 
+                updateConfig={updateConfig} 
+                onNext={nextStep} 
+                onPrev={prevStep} 
+              />
+            )}
+            {state.step === 3 && (
+              <PreviewStep 
+                state={state} 
+                setProcessing={setProcessing}
+                addLog={addLog}
+                setSections={setSections}
+                onNext={nextStep} 
+                onPrev={prevStep} 
+              />
+            )}
+            {state.step === 4 && (
+              <ExportStep 
+                state={state} 
+                onPrev={prevStep} 
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
