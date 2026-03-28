@@ -1,7 +1,5 @@
 import type { AnalyzeResponse, Section, SSEEvent } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
 export async function analyzeDesign(
   htmlFile: File,
   imageFile: File | null,
@@ -17,10 +15,10 @@ export async function analyzeDesign(
     form.append('instructions', text)
   }
 
-  const res = await fetch(`${API_URL}/analyze`, { method: 'POST', body: form })
+  const res = await fetch('/api/analyze', { method: 'POST', body: form })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: 'Error desconocido' }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
+    const err = await res.json().catch(() => ({ error: 'Error desconocido' }))
+    throw new Error(err.error || `HTTP ${res.status}`)
   }
   return res.json()
 }
@@ -32,15 +30,15 @@ export async function streamGenerate(
   title: string,
   onEvent: (event: SSEEvent) => void,
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/generate`, {
+  const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sections, html, domain, title }),
   })
 
   if (!res.ok || !res.body) {
-    const err = await res.json().catch(() => ({ detail: 'Error desconocido' }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
+    const err = await res.json().catch(() => ({ error: 'Error desconocido' }))
+    throw new Error(err.error || `HTTP ${res.status}`)
   }
 
   const reader = res.body.getReader()
@@ -67,5 +65,6 @@ export async function streamGenerate(
 }
 
 export function getDownloadUrl(path: string): string {
-  return `${API_URL}${path}`
+  // path ya es relativo: /api/download/filename.json
+  return path
 }
