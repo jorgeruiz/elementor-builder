@@ -20,7 +20,7 @@ interface SectionStatus {
 
 export default function Step4Generate({ sections, htmlContent, domain, onReset }: Props) {
   const [statuses, setStatuses] = useState<SectionStatus[]>(
-    sections.map((s) => ({ id: s.id, name: s.name, status: 'pending' })),
+    sections.filter((s) => s.enabled).map((s) => ({ id: s.id, name: s.name, status: 'pending' })),
   )
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [validation, setValidation] = useState<{ valid: boolean; errors: string[] } | null>(null)
@@ -37,8 +37,10 @@ export default function Step4Generate({ sections, htmlContent, domain, onReset }
     started.current = true
     setRunning(true)
 
+    const activeSections = sections.filter((s) => s.enabled)
+
     streamGenerate(
-      sections,
+      activeSections,
       htmlContent,
       domain,
       `Página – ${domain}`,

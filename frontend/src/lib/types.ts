@@ -23,6 +23,7 @@ export interface Section {
   justify_content: JustifyContent
   padding_v: number
   padding_h: number
+  enabled: boolean
 }
 
 export interface AnalyzeResponse {

@@ -30,6 +30,7 @@ export default function Home() {
       justify_content: 'flex-start',
       padding_v: s.suggested_padding_v,
       padding_h: s.suggested_padding_h,
+      enabled: true,
     }))
     setHtmlFile(file)
     setHtmlContent(content)
