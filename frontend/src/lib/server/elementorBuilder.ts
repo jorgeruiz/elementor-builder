@@ -3,7 +3,7 @@ export function buildPageWrapper(title: string, content: unknown[]): Record<stri
     title,
     type: 'page',
     version: '0.4',
-    page_settings: [],
+    page_settings: {},
     content,
   }
 }

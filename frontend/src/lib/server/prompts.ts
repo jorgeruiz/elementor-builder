@@ -63,7 +63,6 @@ ESTRUCTURA DE UN WIDGET HEADING:
   "id": "def67890",
   "elType": "widget",
   "widgetType": "heading",
-  "isInner": false,
   "settings": {
     "title": "Texto del heading",
     "header_size": "h1",
@@ -81,7 +80,6 @@ ESTRUCTURA DE UN WIDGET BUTTON:
   "id": "ghi11223",
   "elType": "widget",
   "widgetType": "button",
-  "isInner": false,
   "settings": {
     "text": "CTA Text",
     "link": {"url": "#", "is_external": false, "nofollow": false},
