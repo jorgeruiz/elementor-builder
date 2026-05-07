@@ -23,6 +23,7 @@ export function buildGeneratePrompt(
   sectionConfig: object,
   domain: string,
   sectionHtml: string,
+  guideSnippet?: string | null,
 ): string {
   return `Eres un generador experto de JSON para Elementor Pro v3 con Flexbox Container activo.
 
@@ -41,6 +42,16 @@ REGLAS ABSOLUTAS — NUNCA VIOLAR:
 9. Fondo de imagen requiere background_background: "classic" + background_image object + background_size + background_position
 10. Para grid-3: container_type: "grid", grid_columns_grid: "repeat(3, 1fr)"
 
+${guideSnippet ? `
+REFERENCIA REAL — ESTRUCTURA OBLIGATORIA:
+El siguiente JSON es una exportación real de Elementor de este mismo sitio.
+Copia EXACTAMENTE los mismos nombres de campos, tipos de valores y estructura de anidamiento.
+No inventes campos que no aparezcan aquí. Si un campo aparece en esta referencia, úsalo.
+
+${guideSnippet}
+
+FIN DE REFERENCIA REAL
+` : ''}
 ESTRUCTURA DE UN CONTAINER RAÍZ:
 {
   "id": "abc12345",

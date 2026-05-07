@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, DragEvent } from 'react'
 import { analyzeDesign } from '@/lib/api'
 import type { AnalyzeResponse } from '@/lib/types'
+import { extractGuideExamples, saveGuide, loadGuide, clearGuide } from '@/lib/guideExtractor'
 
 interface Props {
   onDone: (result: AnalyzeResponse, htmlFile: File, htmlContent: string) => void
@@ -101,6 +102,30 @@ export default function Step1Upload({ onDone }: Props) {
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [guideActive, setGuideActive] = useState(() => loadGuide())
+  const [guideError, setGuideError] = useState<string | null>(null)
+
+  async function handleGuideFile(file: File) {
+    setGuideError(null)
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text)
+      const snippet = extractGuideExamples(parsed)
+      if (snippet === '[]' || snippet.length < 10) {
+        setGuideError('No se encontraron containers válidos en este archivo.')
+        return
+      }
+      saveGuide(file.name, snippet)
+      setGuideActive(loadGuide())
+    } catch {
+      setGuideError('Archivo JSON inválido o no es un export de Elementor.')
+    }
+  }
+
+  function handleClearGuide() {
+    clearGuide()
+    setGuideActive(null)
+  }
 
   const canSubmit = htmlFile && domain.trim()
 
@@ -158,6 +183,38 @@ export default function Step1Upload({ onDone }: Props) {
           icon="description"
           hint="instructions.txt · Notas sobre el diseño o preferencias"
         />
+
+        {/* Guía de formato Elementor */}
+        <div>
+          <FileZone
+            label="Guía de formato Elementor"
+            accept=".json"
+            file={null}
+            onFile={handleGuideFile}
+            icon="schema"
+            hint="Export .json de una página real de Elementor — mejora la precisión del JSON generado"
+          />
+          {guideError && (
+            <p className="text-xs text-red-600 mt-1">{guideError}</p>
+          )}
+          {guideActive && !guideError && (
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <span className="material-symbols-outlined text-green-600 flex-shrink-0" style={{ fontSize: 16 }}>
+                verified
+              </span>
+              <span className="text-xs text-green-700 flex-1 truncate font-medium">
+                Guía activa: {guideActive.filename}
+              </span>
+              <button
+                onClick={handleClearGuide}
+                className="text-green-500 hover:text-green-700 flex-shrink-0"
+                title="Eliminar guía"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Dominio */}
         <div>

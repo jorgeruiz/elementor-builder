@@ -49,6 +49,7 @@ interface GenerateRequest {
   html: string
   domain: string
   title?: string
+  guide_snippet?: string
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         const chunks: string[] = []
 
         try {
-          const prompt = buildGeneratePrompt(sectionConfig, body.domain, body.html)
+          const prompt = buildGeneratePrompt(sectionConfig, body.domain, body.html, body.guide_snippet)
           const anthropicStream = client.messages.stream({
             model: 'claude-opus-4-6',
             max_tokens: 8192,

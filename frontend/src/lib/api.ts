@@ -1,4 +1,5 @@
 import type { AnalyzeResponse, Section, SSEEvent } from './types'
+import { loadGuide } from './guideExtractor'
 
 export async function analyzeDesign(
   htmlFile: File,
@@ -30,10 +31,12 @@ export async function streamGenerate(
   title: string,
   onEvent: (event: SSEEvent) => void,
 ): Promise<void> {
+  const guideSnippet = loadGuide()?.snippet ?? null
+
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sections, html, domain, title }),
+    body: JSON.stringify({ sections, html, domain, title, guide_snippet: guideSnippet }),
   })
 
   if (!res.ok || !res.body) {
