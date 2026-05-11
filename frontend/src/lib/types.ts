@@ -19,6 +19,7 @@ export interface Section {
   suggested_padding_h: number
   html_snippet?: string
   item_count?: number | null
+  section_index?: number
   // overrides del paso 3
   flex_direction: FlexDirection
   align_items: AlignItems

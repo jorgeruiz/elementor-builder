@@ -20,15 +20,34 @@ function cleanJson(raw: string): string {
     .trim()
 }
 
-function countRealSections(html: string): number {
+// Devuelve el cheerio instance y el array de <section> de contenido (excluye header/footer/fixed)
+function getSectionElements(html: string) {
   const $ = cheerioLoad(html)
-  return $('body > section, main > section')
+  const els = $('body > section, main > section')
     .not('header section, footer section')
-    .filter((_: number, el: ReturnType<typeof $>[number]) => {
-      const classes = ($(el).attr('class') ?? '').split(' ')
-      return !classes.includes('fixed') && !classes.includes('sticky')
+    .toArray()
+    .filter((el) => {
+      const cls = ($(el as Parameters<typeof $>[0]).attr('class') ?? '').split(' ')
+      return !cls.includes('fixed') && !cls.includes('sticky')
     })
-    .length
+  return { $, els }
+}
+
+// Inyecta html_snippet server-side usando section_index que Claude devuelve
+function injectHtmlSnippets(
+  sections: Record<string, unknown>[],
+  $: ReturnType<typeof cheerioLoad>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  els: any[],
+) {
+  for (const section of sections) {
+    const idx = section.section_index
+    if (typeof idx === 'number' && els[idx]) {
+      section.html_snippet = $.html(els[idx])
+    } else {
+      console.warn('[analyze] section_index inválido:', idx, 'de', els.length)
+    }
+  }
 }
 
 async function callClaude(
@@ -37,7 +56,7 @@ async function callClaude(
 ): Promise<string> {
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 8192,
+    max_tokens: 16000,
     messages: [{ role: 'user', content: userContent }],
   })
   return response.content[0].type === 'text' ? response.content[0].text : ''
@@ -63,41 +82,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'El archivo HTML está vacío' }, { status: 400 })
     }
 
-    // Contar secciones reales con cheerio antes de llamar a Claude
-    const realSectionCount = countRealSections(html)
+    const { $, els: sectionEls } = getSectionElements(html)
+    const realSectionCount = sectionEls.length
     const parsed = parseHtmlSections(html)
-
-    // Construir mensaje base
-    const buildContent = (extraInstruction?: string): Anthropic.MessageParam['content'] => {
-      const content: Anthropic.MessageParam['content'] = []
-
-      if (imageFile && imageFile.size > 0) {
-        // Imagen añadida de forma síncrona — se procesa antes de llamar
-      }
-
-      const textParts: string[] = [ANALYZE_PROMPT]
-      if (extraInstruction) textParts.push(`\n\n${extraInstruction}`)
-      textParts.push(`\nDominio: ${domain}`)
-      if (instructions) textParts.push(`\nInstrucciones adicionales: ${instructions}`)
-      if (realSectionCount > 0) {
-        textParts.push(`\nCONTEO VERIFICADO: El HTML tiene ${realSectionCount} etiquetas <section> de contenido. El array resultado DEBE tener exactamente ${realSectionCount} elementos.`)
-      }
-      textParts.push(
-        `\nSecciones pre-detectadas por parser (${parsed.length}):\n${JSON.stringify(
-          parsed.map((s) => ({ idHint: s.idHint, tag: s.tag, layout: s.layoutHint })),
-          null,
-          2,
-        )}`,
-      )
-      textParts.push(`\n\nHTML completo:\n${html}`)
-      content.push({ type: 'text', text: textParts.join('') })
-      return content
-    }
-
     const client = getClient()
 
-    // Primera llamada — construir content con imagen si existe
+    // Construir primer mensaje
     const firstContent: Anthropic.MessageParam['content'] = []
+
     if (imageFile && imageFile.size > 0) {
       const buffer = Buffer.from(await imageFile.arrayBuffer())
       const base64 = buffer.toString('base64')
@@ -128,8 +120,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     textParts.push(`\n\nHTML completo:\n${html}`)
     firstContent.push({ type: 'text', text: textParts.join('') })
 
-    let raw = cleanJson(await callClaude(client, firstContent))
-    let sections = JSON.parse(raw)
+    const raw = cleanJson(await callClaude(client, firstContent))
+
+    let sections: Record<string, unknown>[]
+    try {
+      sections = JSON.parse(raw)
+    } catch (parseErr) {
+      console.error(
+        '[analyze] JSON.parse falló — length:', raw.length,
+        '— tail:', raw.slice(-200),
+        '— err:', parseErr,
+      )
+      return NextResponse.json(
+        { error: `Respuesta de Claude truncada o inválida (${raw.length} chars). Intenta con un HTML más corto o sin imagen.` },
+        { status: 500 },
+      )
+    }
+
+    // Inyectar html_snippet server-side
+    injectHtmlSnippets(sections, $, sectionEls)
 
     // Retry si Claude devolvió menos secciones de las esperadas
     if (
@@ -139,20 +148,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ) {
       const retryInstruction = `ATENCIÓN: El HTML tiene EXACTAMENTE ${realSectionCount} etiquetas <section> de contenido. Tu respuesta anterior devolvió ${sections.length} secciones — faltan ${realSectionCount - sections.length}. Busca las secciones faltantes (especialmente grids, listas de cards, o secciones con fondo similar a otra). Devuelve EXACTAMENTE ${realSectionCount} elementos en el array.`
 
-      const retryContent = buildContent(retryInstruction)
+      const retryContent: Anthropic.MessageParam['content'] = []
+      const retryParts = [ANALYZE_PROMPT, `\n\n${retryInstruction}`]
+      if (realSectionCount > 0) {
+        retryParts.push(`\n\nCONTEO VERIFICADO: El HTML tiene ${realSectionCount} etiquetas <section>.`)
+      }
+      retryParts.push(`\nDominio: ${domain}`)
+      if (instructions) retryParts.push(`\nInstrucciones adicionales: ${instructions}`)
+      retryParts.push(`\n\nHTML completo:\n${html}`)
+      retryContent.push({ type: 'text', text: retryParts.join('') })
+
       const retryRaw = cleanJson(await callClaude(client, retryContent))
       try {
-        const retrySections = JSON.parse(retryRaw)
+        const retrySections = JSON.parse(retryRaw) as Record<string, unknown>[]
         if (Array.isArray(retrySections) && retrySections.length > sections.length) {
+          injectHtmlSnippets(retrySections, $, sectionEls)
           sections = retrySections
         }
-      } catch {
-        // retry falló — usar resultado original
+      } catch (retryErr) {
+        console.warn('[analyze] retry JSON.parse falló — length:', retryRaw.length, '— err:', retryErr)
+        // usar resultado original con html_snippet ya inyectado
       }
     }
 
     const allImages: string[] = []
-    for (const s of sections) allImages.push(...(s.images ?? []))
+    for (const s of sections) allImages.push(...((s.images as string[]) ?? []))
     const uniqueImages = Array.from(new Set(allImages))
 
     const incomplete =

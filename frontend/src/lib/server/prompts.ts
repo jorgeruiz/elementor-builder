@@ -41,8 +41,11 @@ images: array de strings con URLs o nombres de archivo de imágenes encontradas 
 icons: array de strings con nombres de iconos Material Symbols detectados (vacío [] si ninguno)
 suggested_padding_v: número entero, uno de 0 / 32 / 48 / 64 / 96
 suggested_padding_h: número entero, uno de 0 / 16 / 32 / 64
-html_snippet: el HTML COMPLETO Y LITERAL de esta <section>, copiado exactamente del original sin modificar ni truncar
+section_index: número entero 0-based de la posición de esta <section> en el HTML, contando solo las que NO están dentro de <header> ni <footer>. La primera <section> visible es 0, la siguiente es 1, etc.
 item_count: número entero de cards/items hijos directos del contenedor grid si layout_type empieza con "grid-" o es "two-col" / "three-col", null si es "single"
+
+IMPORTANTE: description, content_summary y name deben tener máximo 200 caracteres cada uno.
+No copies HTML en ningún campo de texto. Las respuestas largas se truncan — mantén el array compacto.
 
 PASO 6 — VERIFICACIÓN FINAL antes de responder:
 Cuenta los objetos en tu array. Debe coincidir exactamente con el número de <section> que contaste en el Paso 1.
