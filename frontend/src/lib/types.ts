@@ -1,4 +1,4 @@
-export type LayoutType = 'single' | 'two-col' | 'three-col' | 'grid-2' | 'grid-3'
+export type LayoutType = 'single' | 'two-col' | 'three-col' | 'grid-2' | 'grid-3' | 'grid-4'
 export type ColSplit = '50/50' | '40/60' | '60/40' | '33/67'
 export type FlexDirection = 'column' | 'row'
 export type AlignItems = 'flex-start' | 'center' | 'flex-end'
@@ -17,6 +17,8 @@ export interface Section {
   icons: string[]
   suggested_padding_v: number
   suggested_padding_h: number
+  html_snippet?: string
+  item_count?: number | null
   // overrides del paso 3
   flex_direction: FlexDirection
   align_items: AlignItems
@@ -30,6 +32,9 @@ export interface AnalyzeResponse {
   sections: Section[]
   total_images: string[]
   domain: string
+  incomplete?: boolean
+  expected?: number
+  found?: number
 }
 
 export type WizardStep = 1 | 2 | 3 | 4

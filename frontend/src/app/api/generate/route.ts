@@ -42,11 +42,13 @@ interface SectionConfig {
   justify_content?: string
   padding_v?: number
   padding_h?: number
+  html_snippet?: string
+  item_count?: number | null
 }
 
 interface GenerateRequest {
   sections: SectionConfig[]
-  html: string
+  html?: string  // ya no se usa en el prompt, mantenido por compatibilidad
   domain: string
   title?: string
   guide_snippet?: string
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         const chunks: string[] = []
 
         try {
-          const prompt = buildGeneratePrompt(sectionConfig, body.domain, body.html, body.guide_snippet)
+          const prompt = buildGeneratePrompt(sectionConfig, body.domain, body.guide_snippet)
           const anthropicStream = client.messages.stream({
             model: 'claude-opus-4-6',
             max_tokens: 8192,
